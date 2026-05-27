@@ -1,0 +1,7 @@
+{
+    "server": "ec2-18-183-112-229.ap-northeast-1.compute.amazonaws.com",
+    "port": "5432",
+    "user": "postgres",
+    "password": "astrolab",
+    "database": "assetz_staging"
+}

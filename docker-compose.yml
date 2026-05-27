@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  label-recognize:
+    build: .
+    container_name: label-recognize-local
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/usr/src/app
