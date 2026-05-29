@@ -118,6 +118,46 @@ class DataIO:
             }
         except IndexError:
             return None
+
+    def get_product_by_jan(self, jan_cd):
+        self.cur.execute(
+            "SELECT id, name, manufacturer_id, model_name, item_category_id, jan_cd FROM m_products WHERE deleted_at IS NULL AND jan_cd = '%s'" % jan_cd)
+        db_results = self.cur.fetchall()
+        result = []
+    
+        for db_result in db_results:
+            _tags = self.get_tags_by_product_id(db_result[0])
+            man_id, cat_id = db_result[2], db_result[4]
+    
+            product = {
+                "id": db_result[0],
+                "jan_cd": db_result[5],
+                "name": db_result[1],
+                "model_name": db_result[3],
+                "tags": _tags
+            }
+    
+            manufacturer = {
+                "id": 0,
+                "name": "null"
+            }
+    
+            if man_id:
+                self.cur.execute(
+                    "SELECT name FROM m_manufacturers WHERE id = '%s'" % db_result[2])
+                _manufacturer_name = self.cur.fetchall()[0]
+                manufacturer = {
+                    "id": db_result[2],
+                    "name": _manufacturer_name[0]
+                }
+    
+            result.append({
+                "product": product,
+                "manufacturer": manufacturer,
+                "model": db_result[3]
+            })
+    
+        return result
             
     def get_product_by_model(self, model):
         self.cur.execute(

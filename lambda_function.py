@@ -61,7 +61,7 @@ def lambda_handler(event, context):
         logger.error('## LABEL RECOGNIZE error')
         logger.error(str(e))
         
-        return {
+        response_data = {
             'result': "false",
             'errorMessage': str(e),
             #'google_result': google_result,
@@ -75,6 +75,16 @@ def lambda_handler(event, context):
             #'stage':event["context"],
             #'-':file_result,
         }
+        
+        if 'file_result' in locals():
+            response_data['Brand'] = file_result[0].get('Brand', [])
+            response_data['JAN'] = file_result[0].get('JAN', [])
+            response_data['Model'] = file_result[0].get('Model', [])
+            response_data['Serial'] = file_result[0].get('Serial', [])
+            response_data['NUMBER'] = file_result[0].get('NUMBER', [])
+            response_data['Other'] = file_result[0].get('Other', [])
+            
+        return response_data
     
     logger.info('## SUCCESSFULLY RECOGNIZED LABEL')
     logger.info('## PARCED TEXT')
@@ -87,7 +97,12 @@ def lambda_handler(event, context):
             'products': products,
             #'stage':event["context"],
             #'google_result': google_result,
+            'Brand':file_result[0]["Brand"],
+            'JAN':file_result[0]["JAN"],
+            'Model':file_result[0]["Model"],
             'Serial':file_result[0]["Serial"],
+            'NUMBER':file_result[0]["NUMBER"],
+            'Other':file_result[0]["Other"],
             'Equipment Number': file_result[0]["NUMBER"],
             #'Regular Expression result':(file_result[0]["Model"],file_result[0]["Other"]),
             #'OCR Time': google_ocr_time,

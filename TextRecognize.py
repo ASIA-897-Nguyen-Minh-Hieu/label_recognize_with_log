@@ -27,6 +27,9 @@ class TextRecognize:
     regex_alphanumeric = [
         r"[ :]*([a-zA-Z0-9\-\/\(\)]*[0-9][a-zA-Z0-9\-\/\(\)]*)[ ,.]*", 1]
 
+    regex_jan_label = r"(?:JAN[\s　]*(?:コード|CODE|No\.?|番号)?|バーコード|Barcode|EAN[\s　]*(?:コード|CODE)?)[^0-9]{0,20}(\d{13}|\d{8})"
+    regex_jan_number = r"(?<!\d)(\d{8}|\d{13})(?!\d)"
+
     def __init__(self, *args, **kwargs):
         # with open('BrandList.json', 'r') as file_json:
         #     self.brand_list = json.load(file_json)
@@ -36,6 +39,7 @@ class TextRecognize:
     def recognize(self, google_text_result):
         ret = {
             "Brand":    [],  # ブランド
+            "JAN":      [],  # JANコード
             "Name":     [],  # 商品名
             "Model":    [],  # 品番
             "Serial":   [],  # 製造番号
@@ -65,10 +69,20 @@ class TextRecognize:
             except (AttributeError, IndexError):
                 pass
 
+        # JAN code recognize
+        jan_candidates = []
+        for itr in re.finditer(self.regex_jan_label, google_text_result["text"], re.MULTILINE | re.IGNORECASE):
+            jan_candidates.append(itr.group(1))
+        for itr in re.finditer(self.regex_jan_number, google_text_result["text"], re.MULTILINE):
+            jan_candidates.append(itr.group(1))
+        for jan in jan_candidates:
+            if jan not in ret["JAN"]:
+                ret["JAN"].append(jan)
+
         # Fallback Recognize
         for itr in re.finditer(self.regex_alphanumeric[0], google_text_result["text"], re.MULTILINE):
             str = itr.group(self.regex_alphanumeric[1])
-            if (str not in ret.values()) and (len(str) > 2):
+            if (str not in ret.values()) and (str not in ret["JAN"]) and (len(str) > 2):
                 ret["Other"].append(str)
         
         # Equipment Management Number Recognize
@@ -85,9 +99,18 @@ class TextRecognize:
         RE_tokenize_time = time.time()- _RE_time
         
         _fuzzy_db_time = time.time()
-        fuzzy_results = self.io.search_fuzzy_model_multiple(reg_result["Model"] + reg_result["Other"])
         reg_result["finded_model"] = {}
+        jan_results_count = 0
+        fuzzy_results = {}
         try:
+            for jan in reg_result["JAN"]:
+                match_results = self.io.get_product_by_jan(jan)
+                jan_results_count += len(match_results)
+                
+                for model in match_results:
+                    reg_result["finded_model"][model['product']['id']] = model;
+
+            fuzzy_results = self.io.search_fuzzy_model_multiple(reg_result["Model"] + reg_result["Other"])
             for (fuzzy_result, fuzzy_ratio) in fuzzy_results.items():
                 match_results = self.io.get_product_by_model(fuzzy_result)
                 
@@ -103,4 +126,4 @@ class TextRecognize:
         except IndexError:
                 print ("Index Error")
         fuzzy_searching_db_time = time.time() - _fuzzy_db_time
-        return reg_result, len(reg_result["Model"])+len(reg_result["Other"]), len(fuzzy_results), RE_tokenize_time, fuzzy_searching_db_time
+        return reg_result, len(reg_result["JAN"])+len(reg_result["Model"])+len(reg_result["Other"]), jan_results_count+len(fuzzy_results), RE_tokenize_time, fuzzy_searching_db_time
