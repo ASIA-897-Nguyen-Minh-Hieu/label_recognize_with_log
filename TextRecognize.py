@@ -27,8 +27,8 @@ class TextRecognize:
     regex_alphanumeric = [
         r"[ :]*([a-zA-Z0-9\-\/\(\)]*[0-9][a-zA-Z0-9\-\/\(\)]*)[ ,.]*", 1]
 
-    regex_jan_label = r"(?:JAN[\s　]*(?:コード|CODE|No\.?|番号)?|バーコード|Barcode|EAN[\s　]*(?:コード|CODE)?)[ \t\r\n　:：\-\.\=]*(?<![a-zA-Z0-9])(\d{13}|\d{8})(?![a-zA-Z0-9])"
-    regex_jan_number = r"(?<![a-zA-Z0-9])(\d{8}|\d{13})(?![a-zA-Z0-9])"
+    regex_jan_label = r"(?:JAN[\s　]*(?:コード|CODE|No\.?|番号)?|バーコード|Barcode|EAN[\s　]*(?:コード|CODE)?)[ \t\r\n　:：\-\.\=]*(?<![a-zA-Z0-9\-])(\d{13}|\d{8})(?![a-zA-Z0-9\-])"
+    regex_jan_number = r"(?<![a-zA-Z0-9\-])(\d{13}|\d{8})(?![a-zA-Z0-9\-])"
 
     def __init__(self, *args, **kwargs):
         # with open('BrandList.json', 'r') as file_json:
@@ -72,9 +72,13 @@ class TextRecognize:
         # JAN code recognize
         jan_candidates = []
         for itr in re.finditer(self.regex_jan_label, google_text_result["text"], re.MULTILINE | re.IGNORECASE):
-            jan_candidates.append(itr.group(1))
+            val = itr.group(1)
+            if len(val) in (8, 13) and val.isdigit():
+                jan_candidates.append(val)
         for itr in re.finditer(self.regex_jan_number, google_text_result["text"], re.MULTILINE):
-            jan_candidates.append(itr.group(1))
+            val = itr.group(1)
+            if len(val) in (8, 13) and val.isdigit():
+                jan_candidates.append(val)
         for jan in jan_candidates:
             if jan not in ret["JAN"]:
                 ret["JAN"].append(jan)
