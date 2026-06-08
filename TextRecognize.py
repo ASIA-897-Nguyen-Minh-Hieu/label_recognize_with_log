@@ -27,8 +27,8 @@ class TextRecognize:
     regex_alphanumeric = [
         r"[ :]*([a-zA-Z0-9\-\/\(\)]*[0-9][a-zA-Z0-9\-\/\(\)]*)[ ,.]*", 1]
 
-    regex_jan_label = r"(?:JAN[\s　]*(?:コード|CODE|No\.?|番号)?|バーコード|Barcode|EAN[\s　]*(?:コード|CODE)?)[^0-9]{0,20}(\d{13}|\d{8})"
-    regex_jan_number = r"(?<!\d)(\d{8}|\d{13})(?!\d)"
+    regex_jan_label = r"(?:JAN[\s　]*(?:コード|CODE|No\.?|番号)?|バーコード|Barcode|EAN[\s　]*(?:コード|CODE)?)[ \t\r\n　:：\-\.\=]*(?<![a-zA-Z0-9])(\d{13}|\d{8})(?![a-zA-Z0-9])"
+    regex_jan_number = r"(?<![a-zA-Z0-9])(\d{8}|\d{13})(?![a-zA-Z0-9])"
 
     def __init__(self, *args, **kwargs):
         # with open('BrandList.json', 'r') as file_json:
